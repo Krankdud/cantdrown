@@ -79,11 +79,11 @@ async def host(ctx, iwad, idgames):
     # Start the server and notify the users
     log.info('Running command to start server: {}'.format(cmd))
     subprocess.Popen(cmd)
-    await ctx.send('Created Zandronum server "{}", go get those frags!'.format(serverName))
+    await ctx.send('Created Zandronum server "{}", have fun!'.format(serverName))
 
 @host.error
 async def host_error(ctx, error):
-    if isinstance(error, commands.MissingRequiredArgument):
+    if isinstance(error, commands.MissingRequiredArgument) or isinstance(error, commands.TooManyArguments):
         await ctx.send('Usage: !host <iwad> <idgames url>')
     else:
         # @Krankdud when something goes wrong
