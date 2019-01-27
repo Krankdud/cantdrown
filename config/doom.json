@@ -1,0 +1,13 @@
+{
+    "zandronum": "",
+    "serverArguments": "",
+    "serverBaseName": "Bathtub",
+    "iwads": {
+        "doom": "",
+        "doom2": "",
+        "tnt": "",
+        "plutonia": ""
+    },
+    "wadsDirectory": "",
+    "idgamesMirror": "http://mirrors.syringanetworks.net/idgames"
+}

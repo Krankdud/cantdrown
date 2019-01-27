@@ -4,20 +4,22 @@ import asyncio
 import discord
 from discord.ext import commands
 import io
+import json
 import logging
 import logging.config
 import re
 import subprocess
 import zipfile
 
-IDGAMES_MIRROR = 'http://mirrors.syringanetworks.net/idgames'
-WAD_DIR = 'tmp'
-IWAD_PATH = '/cygdrive/g/Games/Doom/Iwads/DOOM2.WAD'
-ZANDRONUM_PATH = '/cygdrive/g/Games/Doom/Zandronum/zandronum.exe'
-
+# Logging setup
 logging.config.fileConfig('config/logging.conf')
-
 log = logging.getLogger('dev')
+
+# Doom configuration initialization
+with open('config/doom.json', 'r') as f:
+    configDoom = json.load(f)
+    log.info('Doom configuration loaded')
+
 bot = commands.Bot(command_prefix='!')
 
 @bot.command()
@@ -27,7 +29,7 @@ async def drown(ctx):
 @bot.command()
 async def host(ctx, iwad, idgames):
     iwad = iwad.lower()
-    if iwad != 'doom' and iwad != 'doom2' and iwad != 'tnt' and iwad != 'plutonia':
+    if iwad not in configDoom['iwads']:
         await ctx.send('Invalid IWAD')
         return
 
@@ -37,45 +39,62 @@ async def host(ctx, iwad, idgames):
         return
 
     wads = []
-    url = IDGAMES_MIRROR + idgames[match.end():] + '.zip'
+    gameName = idgames.split('/')[-1]
+    url = configDoom['idgamesMirror'] + idgames[match.end():] + '.zip'
     log.info('Attempting to download wad from {}'.format(url))
     async with aiohttp.ClientSession() as session:
         async with session.get(url) as response:
             if response.status == 200:
+                # This is synchronous which could potentially cause problems, but since
+                # the bot only serves one server, I'm not going to worry about it now.
                 with zipfile.ZipFile(io.BytesIO(await response.read()), 'r') as wadZip:
                     for name in wadZip.namelist():
                         if re.fullmatch('.*\\.wad', name):
-                            wadZip.extract(name, WAD_DIR)
-                            wads.append(WAD_DIR + '/' + name)
+                            wadZip.extract(name, configDoom['wadsDirectory'])
+                            wads.append(configDoom['wadsDirectory'] + '/' + name)
             else:
                 log.warning('Could not download wad from {0}, response status: {1}'.format(url, response.status))
                 ctx.send('Could not download the wad')
 
+    # Check that we have extracted wads before starting the server
     if len(wads) == 0:
         await ctx.send('No wads found in zip file')
         return
 
+    # Build the command to run the server
+    serverName = configDoom['serverBaseName'] + ' ({})'.format(gameName) 
     cmd = [
-        ZANDRONUM_PATH,
-        #'-host',
+        configDoom['zandronum'],
+        '-host',
         '-iwad',
-        IWAD_PATH,
+        configDoom['iwads'][iwad],
     ]
     for wad in wads:
         cmd.append('-file')
         cmd.append(wad)
+    cmd.append(configDoom['serverArguments'])
+    cmd.append('+sv_hostname')
+    cmd.append(serverName)
     
+    # Start the server and notify the users
     log.info('Running command to start server: {}'.format(cmd))
     subprocess.Popen(cmd)
-    await ctx.send('Server started, go get those frags!')
+    await ctx.send('Created Zandronum server "{}", go get those frags!'.format(serverName))
+
+@host.error
+async def host_error(ctx, error):
+    if isinstance(error, commands.MissingRequiredArgument):
+        await ctx.send('Usage: !host <iwad> <idgames url>')
+    else:
+        # @Krankdud when something goes wrong
+        await ctx.send('An error occurred when trying to host. <@83043150397968384>')
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('token', help='discord API token')
-    parser.add_argument('-c', '--config', help='configuration')
     args = parser.parse_args()
 
-    log.info('running bot')
+    log.info('Running the bot')
     bot.run(args.token)
 
 if __name__ == '__main__':
