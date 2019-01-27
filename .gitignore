@@ -246,3 +246,5 @@ $RECYCLE.BIN/
 *.lnk
 
 # End of https://www.gitignore.io/api/vim,git,osx,linux,python,windows,virtualenv,visualstudiocode
+
+tmp/
