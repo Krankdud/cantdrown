@@ -27,20 +27,38 @@ async def drown(ctx):
     await ctx.send("I can't")
 
 @bot.command()
-async def host(ctx, iwad, idgames):
-    iwad = iwad.lower()
+async def host(ctx, *args):
+    if len(args) == 0:
+        await host_help(ctx)
+        return
+    
+    if len(args) == 1 and len(ctx.message.attachments) == 0:
+        await host_help(ctx)
+        return
+
+    iwad = args[0].lower()
     if iwad not in configDoom['iwads']:
         await ctx.send('Invalid IWAD')
+        await host_help(ctx)
         return
 
-    match = re.search('doomworld\\.com\\/idgames', idgames)
-    if not match:
-        await ctx.send('Invalid idgames url')
-        return
+    url = ''
+    gameName = ''
+    if len(args) == 1:
+        attachment = ctx.message.attachments[0]
+        url = attachment.url
+        gameName = attachment.filename.split('.')[0]
+    else:
+        idgames = args[1]
+        match = re.search('doomworld\\.com\\/idgames', idgames)
+        if not match:
+            await ctx.send('Invalid idgames url')
+            await host_help(ctx)
+            return
+        url = configDoom['idgamesMirror'] + idgames[match.end():] + '.zip'
+        gameName = idgames.split('/')[-1]
 
     wads = []
-    gameName = idgames.split('/')[-1]
-    url = configDoom['idgamesMirror'] + idgames[match.end():] + '.zip'
     log.info('Attempting to download wad from {}'.format(url))
     async with aiohttp.ClientSession() as session:
         async with session.get(url) as response:
@@ -58,7 +76,7 @@ async def host(ctx, iwad, idgames):
 
     # Check that we have extracted wads before starting the server
     if len(wads) == 0:
-        await ctx.send('No wads found in zip file')
+        await ctx.send('No wads found in the zip file')
         return
 
     # Build the command to run the server
@@ -84,10 +102,24 @@ async def host(ctx, iwad, idgames):
 @host.error
 async def host_error(ctx, error):
     if isinstance(error, commands.MissingRequiredArgument) or isinstance(error, commands.TooManyArguments):
-        await ctx.send('Usage: !host <iwad> <idgames url>')
+        await ctx.send('There are either too many arguments, or an argument is missing')
+        await host_help(ctx)
+    elif isinstance(error, commands.CommandInvokeError) and isinstance(error.original, zipfile.BadZipFile):
+        await ctx.send('The attachment is not a zip file')
+        await host_help(ctx)
     else:
-        # @Krankdud when something goes wrong
-        await ctx.send('An error occurred when trying to host. <@83043150397968384>')
+        log.error(error)
+        await ctx.send('An error occurred when trying to host.')
+
+async def host_help(ctx):
+    helpMsg = '```Usage:\n'
+    helpMsg += '!host <iwad> <idgames url> - Host a wad from the idgames archive\n'
+    helpMsg += '!host <iwad> - Use with an attached zip file to host the contained wad\n'
+    helpMsg += '\nValid iwads:'
+    for iwad in configDoom['iwads']:
+        helpMsg += '\n{}'.format(iwad)
+    helpMsg += '```'
+    await ctx.send(helpMsg)
 
 def main():
     parser = argparse.ArgumentParser()

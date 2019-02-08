@@ -17,6 +17,7 @@ token is your Discord bot token from the [Discord Developer Application Portal](
 
 ```
 !host <iwad> <idgames url> - Hosts a Zandronum server
+!host <iwad> - Use with a zip file attachment to host a Zandronum server
 ```
 
 ## Configuration
