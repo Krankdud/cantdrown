@@ -19,6 +19,7 @@ def main():
     log.info('Loading cogs...')
     bot.load_extension('cogs.doom')
     bot.load_extension('cogs.misc')
+    bot.load_extension('cogs.roles')
     log.info('Running the bot...')
     bot.run(args.token)
 
