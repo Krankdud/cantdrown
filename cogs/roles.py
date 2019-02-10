@@ -14,7 +14,8 @@ class RolesCog():
 
     @commands.command()
     async def role(self, ctx, desiredRoleId):
-        if not self.config['roles'][desiredRoleId]:
+        desiredRoleId = desiredRoleId.lower()
+        if desiredRoleId not in self.config['roles']:
             await ctx.send('Invalid role')
             await self.role_help(ctx)
             return
@@ -26,11 +27,11 @@ class RolesCog():
         for role in user.roles:
             if role == desiredRole:
                 await user.remove_roles(role)
-                await ctx.send('<@{0}>: Removed {1} role'.format(user.id, role.name))
+                await ctx.send('<@{0}>: Removed from {1} role'.format(user.id, role.name))
                 return
 
         await user.add_roles(desiredRole)
-        await ctx.send('<@{0}>: Added {1} role'.format(user.id, desiredRole.name))
+        await ctx.send('<@{0}>: Added to {1} role'.format(user.id, desiredRole.name))
 
     @role.error
     async def role_error(self, ctx, error):
