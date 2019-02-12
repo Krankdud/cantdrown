@@ -72,6 +72,10 @@ class DoomCog:
                     await self.host_help(ctx)
                     return
                 url = 'https://drive.google.com/uc?export=download&id={0}'.format(googleDriveId)
+            else:
+                await ctx.send('Use an idgames, Dropbox, or Google Drive URL')
+                await self.host_help(ctx)
+                return
 
         wads = []
         log.info('Attempting to download wad from {}'.format(url))
@@ -144,7 +148,7 @@ class DoomCog:
 
     async def host_help(self, ctx):
         helpMsg = '```Usage:\n'
-        helpMsg += '!host <iwad> <idgames url> - Host a wad from the idgames archive\n'
+        helpMsg += '!host <iwad> <url> - Host a wad from either the idgames archive, Dropbox, or Google Drive\n'
         helpMsg += '!host <iwad> - Use with an attached zip file to host the contained wad\n'
         helpMsg += '\nValid iwads:'
         for iwad in self.config['iwads']:
