@@ -73,9 +73,7 @@ class DoomCog:
                     return
                 url = 'https://drive.google.com/uc?export=download&id={0}'.format(googleDriveId)
             else:
-                await ctx.send('Use an idgames, Dropbox, or Google Drive URL')
-                await self.host_help(ctx)
-                return
+                url = fileURL
 
         wads = []
         log.info('Attempting to download wad from {}'.format(url))
@@ -131,8 +129,9 @@ class DoomCog:
 
         # Start the server and notify the users
         log.info('Running command to start server: {}'.format(cmd))
-        subprocess.Popen(cmd)
+        process = subprocess.Popen(cmd)
         await ctx.send('Created Zandronum server "{}", have fun!'.format(serverName))
+        await self.kill_server(process)
 
     @host.error
     async def host_error(self, ctx, error):
@@ -155,6 +154,12 @@ class DoomCog:
             helpMsg += '\n{}'.format(iwad)
         helpMsg += '```'
         await ctx.send(helpMsg)
+
+    async def kill_server(self, process):
+        await asyncio.sleep(self.config["timeout"])
+        if process.poll() == None:
+            log.info('Terminating process {}'.format(process.pid))
+            process.terminate()
 
 def setup(bot):
     bot.add_cog(DoomCog(bot))
