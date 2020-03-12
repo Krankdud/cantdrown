@@ -11,7 +11,7 @@ import zipfile
 
 log = logging.getLogger('dev')
 
-class DoomCog:
+class DoomCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 

@@ -3,7 +3,7 @@ import logging
 
 log = logging.getLogger('dev')
 
-class MiscCog():
+class MiscCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
