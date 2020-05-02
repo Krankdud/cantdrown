@@ -95,7 +95,7 @@ class DoomCog(commands.Cog):
                         # the bot only serves one server, I'm not going to worry about it now.
                         with zipfile.ZipFile(io.BytesIO(await response.read()), 'r') as wadZip:
                             for name in wadZip.namelist():
-                                if name[-4:].lower() == '.wad' or name[-4:].lower() == '.pk3':
+                                if name[-4:].lower() == '.wad' or name[-4:].lower() == '.pk3' or name[-4:].lower() == '.deh':
                                     wadZip.extract(name, self.config['wadsDirectory'])
                                     wads.append(self.config['wadsDirectory'] + '/' + name)
                     elif filename[-4:].lower() == '.wad' or filename[-4:].lower == '.pk3':
